@@ -1,25 +1,39 @@
+using AspDotNetLab2.Classes;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddTransient<ITimerService, TimerService>();
+builder.Services.AddScoped<RandomService>();
+builder.Services.AddScoped<IRandom, RandomNumber>();
+builder.Services.AddSingleton<Counter>();
+
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+app.UseCounterMiddleware();
+IServiceCollection _services = builder.Services;
+app.Map("/services/list", builder =>
 {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapRazorPages();
+    builder.Run(async context =>
+    {
+        var sb = new StringBuilder();
+        sb.Append("<h1>Óñ³ ñåðâ³ñè</h1>");
+        sb.Append("<table border=\"1\">");
+        sb.Append("<tr><th>Òèï</th><th>Lifetime</th><th>Ðåàë³çàö³ÿ</th></tr>");
+        foreach (var svc in _services)
+        {
+            sb.Append("<tr>");
+            sb.Append($"<td>{svc.ServiceType.FullName}</td>");
+            sb.Append($"<td>{svc.Lifetime}</td>");
+            sb.Append($"<td>{svc.ImplementationType?.FullName}</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</table>");
+        context.Response.ContentType = "text/html;charset=utf-8";
+        await context.Response.WriteAsync(sb.ToString());
+    });
+});
+app.UseTimerMiddleware();
+app.UseRandomMiddleware();
 
 app.Run();
