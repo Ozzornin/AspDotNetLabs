@@ -2,6 +2,7 @@ using AspDotNetLab3.Loggers;
 using AspDotNetLab3.Middleware;
 using Microsoft.AspNetCore.Builder;
 using System.Text;
+using System.Xml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,17 +23,24 @@ app.UseMiddleware<LoggerMiddleware>();
 app.UseSession();
 
 
-app.MapGet("/{lang}/{controller}/{action}/{id?}", (string language, string controller, string action, string? id) =>
-{
-    if (id == null)
-        id = "The property details were not provided, leaving us without specific information about it.";
-    return $"Controller: {controller}\nAction: {action}\nId: {id}\nLanguage: {language}";
+app.MapGet("/{lang}/{controller}/{action}/{id?:int}", (string language, string controller, string action, int? id) =>
+{    
+    var sb = new StringBuilder();
+    sb.AppendLine($"Controller: {controller}");
+    sb.AppendLine($"Action: {action}");
+    if (id != null)
+        sb.AppendLine($"Id: {id}");
+    sb.AppendLine($"Language: {language}");
+    return sb.ToString();
 });
-app.MapGet("/{controller}/{action}/{id?}", (string controller, string action, string? id) =>
+app.MapGet("/{controller}/{action}/{id?:int}", (string controller, string action, int? id) =>
 {
-    if (id == null)
-        id = "The property details were not provided, leaving us without specific information about it.";
-    return $"Controller: {controller}\nAction: {action}\nId: {id}";
+    var sb = new StringBuilder();
+    sb.AppendLine($"Controller: {controller}");
+    sb.AppendLine($"Action: {action}");
+    if (id != null)
+        sb.AppendLine($"Id: {id}");
+    return sb.ToString();
 });
 
 app.MapGet("/session/add/{key}/{value}", async (HttpContext context, string key, string value) =>
@@ -65,11 +73,5 @@ app.Map("/hello", builder =>
         await context.Response.WriteAsync("SEKA");
     });
 });
-
-
-
-app.Run();
-
-
 
 app.Run();
